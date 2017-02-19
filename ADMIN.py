@@ -8,13 +8,14 @@ import datetime
 import json
 import time
 import asyncio
+import inspect
 
 global log
 log = []
 global tlog
 tlog = []
 
-def defdel(meslog,timlog):
+async def defdel(meslog,timlog):
     log.append(meslog)
     tlog.append(timlog)
 
@@ -40,45 +41,51 @@ class ADMIN():
                 delete_at_time = j + 30.0
                 while time.time() < delete_at_time:
                     await asyncio.sleep(1)
-                await self.bot.delete_message(i)
+                try:
+                    await self.bot.delete_message(i)
+                except:
+                    pass
                 log.remove(i)
                 tlog.remove(j)
         self.bot.loop.call_later(10, self.confdefdel)
 
-    @commands.command(hidden=True)
+    @commands.command(pass_context=True, hidden=True)
     @is_owner()
-    async def load(self, extension_name : str):
+    async def load(self,ctx,extension_name : str):
         'Load an extension/category.'
+        await defdel(ctx.message,time.time())
         try:
             self.bot.load_extension(extension_name)
         except ImportError:
             msg = await self.bot.say('```py\n{}: {}\n```'.format(type(e).__name__, str(e)))
-            defdel(msg,time.time())
+            await defdel(msg,time.time())
             return
         msg = await self.bot.say('```py\n\'{}\' loaded.\n```'.format(extension_name))
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
-    @commands.command(hidden=True)
+    @commands.command(pass_context=True, hidden=True)
     @is_owner()
-    async def unload(self, extension_name : str):
+    async def unload(self, ctx, extension_name : str):
         'Unload an extension/category.'
+        await defdel(ctx.message,time.time())
         self.bot.unload_extension(extension_name)
         msg = await self.bot.say('```py\n\'{}\' unloaded.\n```'.format(extension_name))
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
-    @commands.command(hidden=True)
+    @commands.command(pass_context=True, hidden=True)
     @is_owner()
-    async def reload(self, extension_name : str):
+    async def reload(self, ctx, extension_name : str):
         'Reload an extension/category.'
+        await defdel(ctx.message,time.time())
         self.bot.unload_extension(extension_name)
         try:
             self.bot.load_extension(extension_name)
         except (AttributeError, ImportError) as e:
             msg = await self.bot.say('```py\n{}: {}\n```'.format(type(e).__name__, str(e)))
-            defdel(msg,time.time())
+            await defdel(msg,time.time())
             return
         msg = await self.bot.say('```py\n\'{}\' reloaded.\n```'.format(extension_name))
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
     @commands.command(hidden=True)
     @is_owner()
@@ -87,22 +94,45 @@ class ADMIN():
         for server in self.bot.servers:
             try:
                 message = await self.bot.send_message(discord.Object(id=server.id), '`' + input + '`')
-                defdel(message,time.time())
             except:
                 pass
         msg = await self.bot.say('`Broadcast complete.`')
-        defdel(msg,time.time())
 
-    @commands.command(hidden=True)
+    @commands.command(pass_context=True, hidden=True)
     @is_owner()
-    async def sayit(self,*,saywhat : str):
+    async def sayit(self,ctx,*,saywhat : str):
+        await defdel(ctx.message,time.time())
         await self.bot.say(saywhat)
         return
+
+    @commands.command(pass_context=True, hidden=True)
+    @is_owner()
+    async def debug(self, ctx, *, code : str):
+        'Evaluate code.'
+        code = code.strip('` ')
+        python = '```py\n{}\n```'
+        result = None
+        env = {
+            'bot': self.bot,
+            'ctx': ctx,
+            'message': ctx.message,
+            'server': ctx.message.server,
+            'channel': ctx.message.channel,
+            'author': ctx.message.author
+            }
+        env.update(globals())
+        try:
+            result = eval(code, env)
+            if inspect.isawaitable(result):
+                result = await result
+        except Exception as e:
+            await self.bot.say(python.format(type(e).__name__ + ': ' + str(e)))
+            return
+        await self.bot.say(python.format(result))
 
     @broadcast.error
     async def variablemissing(self, error, ctw):
         msg = await self.bot.say('`Missing message input. Proper usage: ?broadcast <message>`')
-        defdel(msg,time.time())
         return
 
     @load.error
@@ -118,7 +148,6 @@ class ADMIN():
         else:
             result = '```Fatal error: {} : {}\nContact Orito with the above error.```'.format(error,ctw)
         msg = await self.bot.say(result)
-        defdel(msg,time.time())
         return
 
 def setup(bot):

@@ -17,7 +17,7 @@ global tlog
 log = []
 tlog = []
 
-def defdel(meslog,timlog):
+async def defdel(meslog,timlog):
     log.append(meslog)
     tlog.append(timlog)
 
@@ -60,21 +60,25 @@ class General():
                 delete_at_time = j + 30.0
                 while time.time() < delete_at_time:
                     await asyncio.sleep(1)
-                await self.bot.delete_message(i)
+                try:
+                    await self.bot.delete_message(i)
+                except:
+                    pass
                 log.remove(i)
                 tlog.remove(j)
         self.bot.loop.call_later(10, self.confdefdel)
 
-    @commands.command()
-    async def who(self, charName : str):
+    @commands.command(pass_context=True)
+    async def who(self, ctx, charName : str):
         'Returns character information.'
+        await defdel(ctx.message,time.time())
         if charName == '':
             result = 'Proper usage: ?who <charName>'
         try:
             heraldquery = await webquery('https://uthgard.org/herald/api/player/',charName.title())
             if len(heraldquery) < 20:
                 msg = await self.bot.say('```Character \'{}\' doesn\'t exist.```'.format(charName))
-                defdel(msg,time.time())
+                await defdel(msg,time.time())
                 return
             global heraldlist
             heraldlist = []
@@ -111,20 +115,20 @@ class General():
         except:
             result = 'An unknown issue occurred. Please contact Orito and include the command you were trying to run.'
         msg = await self.bot.say('```' + result + '```')
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
     @who.error
     async def who_error(self, error, ctw):
         msg = await self.bot.say('```Proper usage: ?who <charName>\nExample: ?who Orito```')
-        defdel(msg,time.time())
         return
 
-    @commands.command()
-    async def search(self, type : str, *, query : str):
+    @commands.command(pass_context=True)
+    async def search(self, ctx, type : str, *, query : str):
         'Performs a character or guild search.'
+        await defdel(ctx.message,time.time())
         if len(query) < 3:
             msg = await self.bot.say('```You entered too few characters. You must enter a minimum of 3 characters in order to perform a search.```')
-            defdel(msg,time.time())
+            await defdel(msg,time.time())
             return
         global searchlist
         searchlist = []
@@ -136,19 +140,19 @@ class General():
             url = 'https://uthgard.org/herald/api/search/guild/'
         else:
             msg = await self.bot.say('```Invalid search type, \'{}\'. Valid entries: \'character\', \'char\', \'guild\'.```'.format(type))
-            defdel(msg,time.time())
+            await defdel(msg,time.time())
             return
         try:
             uthquery = await webquery(url,query)
             await parsesearch(uthquery)
         except (RuntimeError, TypeError, NameError):
             msg = await self.bot.say('```Error.\n{} : {} : {}```'.format(RuntimeError,TypeError,NameError))
-            defdel(msg,time.time())
+            await defdel(msg,time.time())
             return
         if searchlist == []:
             query = query.replace('%20',' ')
             msg = await self.bot.say('```Your search for \'{}\' returned no results.```'.format(query))
-            defdel(msg,time.time())
+            await defdel(msg,time.time())
             return
         complist = ''
         if not type.lower() == 'guild':
@@ -183,22 +187,21 @@ class General():
                     complist = '{}{}<{}> Lv {} {} {} RR {}L{}\n'.format(complist,comptest,heraldlist[nGD],heraldlist[nLV],heraldlist[nRC],heraldlist[nCL],rrMax,rrMin)
                 if len(complist) > 1600:
                     msg = await self.bot.say('```{}```'.format(complist))
-                    defdel(msg,time.time())
+                    await defdel(msg,time.time())
                     complist = ''
         else:
             for i in searchlist:
                 complist = '{}<{}>\n'.format(complist,i)
                 if len(complist) > 1600:
                     msg = await self.bot.say('```{}```'.format(complist))
-                    defdel(msg,time.time())
+                    await defdel(msg,time.time())
                     complist = ''
         msg = await self.bot.say('```{}```'.format(complist))
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
     @search.error
     async def search_error(self, error, ctw):
         msg = await self.bot.say('```Proper usage: ?search [char,character,guild] <query>\nExample: ?search char Ori```')
-        defdel(msg,time.time())
         return
 
 def setup(bot):

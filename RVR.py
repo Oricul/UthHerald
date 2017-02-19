@@ -13,7 +13,7 @@ log = []
 global tlog
 tlog = []
 
-def defdel(meslog,timlog):
+async def defdel(meslog,timlog):
     log.append(meslog)
     tlog.append(timlog)
 
@@ -31,14 +31,18 @@ class RVR():
                 delete_at_time = j + 30.0
                 while time.time() < delete_at_time:
                     await asyncio.sleep(1)
-                await self.bot.delete_message(i)
+                try:
+                    await self.bot.delete_message(i)
+                except:
+                    pass
                 log.remove(i)
                 tlog.remove(j)
         self.bot.loop.call_later(10, self.confdefdel)
 
-    @commands.command()
-    async def df(self):
+    @commands.command(pass_context=True)
+    async def df(self, ctx):
         'Returns the current realm that owns Darkness Falls.'
+        await defdel(ctx.message,time.time())
         try:
             response = urlopen('http://uthgard.riftmetric.com/realmwar.html.json')
             obj = json.loads(response.read().decode('utf-8'))
@@ -52,11 +56,12 @@ class RVR():
         except:
             result = 'An error occurred.'
         msg = await self.bot.say('```' + result + '```')
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
-    @commands.command()
-    async def bg(self):
+    @commands.command(pass_context=True)
+    async def bg(self, ctx):
         'Returns a list of battlegrounds keeps and their current owners.'
+        await defdel(ctx.message,time.time())
         try:
             response = urlopen('http://uthgard.riftmetric.com/realmwar.html.json')
             obj = json.loads(response.read().decode('utf-8'))
@@ -95,11 +100,12 @@ class RVR():
         except:
             result = 'An unknown error occurred. Please contact Orito with the command you tried when encountering this.'
         msg = await self.bot.say('```' + result + '```')
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
-    @commands.command()
-    async def keeps(self, realm : str):
+    @commands.command(pass_context=True)
+    async def keeps(self, ctx, realm : str):
         'Returns a list of keeps by realm and their current owners.'
+        await defdel(ctx.message,time.time())
         try:
             response = urlopen('http://uthgard.riftmetric.com/realmwar.html.json')
             obj = json.loads(response.read().decode('utf-8'))
@@ -126,12 +132,11 @@ class RVR():
         except Exception:
             result = 'An unknown exception occurred. Please contact Orito and include the command you tried to run.'
         msg = await self.bot.say('```' + result + '```')
-        defdel(msg,time.time())
+        await defdel(msg,time.time())
 
     @keeps.error
     async def keeps_error(self, error, ctw):
         msg = await self.bot.say('```Proper usage: ?keeps <realm>\nExample: ?keeps hib```')
-        defdel(msg,time.time())
         return
 
 
