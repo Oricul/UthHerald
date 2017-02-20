@@ -9,16 +9,7 @@ import json
 import time
 import asyncio
 import inspect
-
-global log
-log = []
-global tlog
-tlog = []
-
-async def defdel(meslog,timlog):
-    log.append(meslog)
-    tlog.append(timlog)
-
+import delcomp
 
 def is_owner_check(message):
     return message.author.id == '107270310344024064'
@@ -30,62 +21,44 @@ def is_owner():
 class ADMIN():
     def __init__(self, bot):
         self.bot = bot
-        self.bot.loop.call_soon(self.confdefdel)
-
-    def confdefdel(self):
-        self.bot.loop.create_task(self.delmsg())
-
-    async def delmsg(self):
-        while len(log) > 0:
-            for i, j in zip(log,tlog):
-                delete_at_time = j + 30.0
-                while time.time() < delete_at_time:
-                    await asyncio.sleep(1)
-                try:
-                    await self.bot.delete_message(i)
-                except:
-                    pass
-                log.remove(i)
-                tlog.remove(j)
-        self.bot.loop.call_later(10, self.confdefdel)
 
     @commands.command(pass_context=True, hidden=True)
     @is_owner()
     async def load(self,ctx,extension_name : str):
         'Load an extension/category.'
-        await defdel(ctx.message,time.time())
+        await delcomp.defdel(ctx.message,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
         try:
             self.bot.load_extension(extension_name)
         except ImportError:
             msg = await self.bot.say('```py\n{}: {}\n```'.format(type(e).__name__, str(e)))
-            await defdel(msg,time.time())
+            await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
             return
         msg = await self.bot.say('```py\n\'{}\' loaded.\n```'.format(extension_name))
-        await defdel(msg,time.time())
+        await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
 
     @commands.command(pass_context=True, hidden=True)
     @is_owner()
     async def unload(self, ctx, extension_name : str):
         'Unload an extension/category.'
-        await defdel(ctx.message,time.time())
+        await delcomp.defdel(ctx.message,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
         self.bot.unload_extension(extension_name)
         msg = await self.bot.say('```py\n\'{}\' unloaded.\n```'.format(extension_name))
-        await defdel(msg,time.time())
+        await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
 
     @commands.command(pass_context=True, hidden=True)
     @is_owner()
     async def reload(self, ctx, extension_name : str):
         'Reload an extension/category.'
-        await defdel(ctx.message,time.time())
+        await delcomp.defdel(ctx.message,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
         self.bot.unload_extension(extension_name)
         try:
             self.bot.load_extension(extension_name)
         except (AttributeError, ImportError) as e:
             msg = await self.bot.say('```py\n{}: {}\n```'.format(type(e).__name__, str(e)))
-            await defdel(msg,time.time())
+            await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
             return
         msg = await self.bot.say('```py\n\'{}\' reloaded.\n```'.format(extension_name))
-        await defdel(msg,time.time())
+        await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
 
     @commands.command(hidden=True)
     @is_owner()
@@ -101,7 +74,7 @@ class ADMIN():
     @commands.command(pass_context=True, hidden=True)
     @is_owner()
     async def sayit(self,ctx,*,saywhat : str):
-        await defdel(ctx.message,time.time())
+        await delcomp.defdel(ctx.message,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
         await self.bot.say(saywhat)
         return
 
@@ -138,7 +111,7 @@ class ADMIN():
     @load.error
     @unload.error
     @reload.error
-    @sayit.error
+    #@sayit.error
     async def permission_error(self, error, ctw):
         error = str(error)
         if 'The check functions for command' in error:

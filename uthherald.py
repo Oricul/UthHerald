@@ -6,7 +6,7 @@ from discord.ext import commands
 import datetime
 import json
 
-startup_extensions = ['RVR','General','ADMIN']
+startup_extensions = ['RVR','General','ADMIN','delcomp']
 
 description = 'Created by Orito <Sword of the Dragon>\nSpecial thanks to Armsperson for providing JSON access to his data.\n\nFor support visit: https://goo.gl/QuM7J8\n\nUpdated: 02/16/2017 00:46 GMT-6'
 bot = commands.Bot(command_prefix='?', description=description)

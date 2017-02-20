@@ -11,15 +11,7 @@ import aiohttp
 from aiohttp import web
 import re
 import time
-
-global log
-global tlog
-log = []
-tlog = []
-
-async def defdel(meslog,timlog):
-    log.append(meslog)
-    tlog.append(timlog)
+import delcomp
 
 async def split_line(text):
     words = re.split(': |,|\n|\\t| "|" ',text)
@@ -49,36 +41,18 @@ async def webquery(url,add):
 class General():
     def __init__(self, bot):
         self.bot = bot
-        self.bot.loop.call_soon(self.confdefdel)
-
-    def confdefdel(self):
-        self.bot.loop.create_task(self.delmsg())
-
-    async def delmsg(self):
-        while len(log) > 0:
-            for i, j in zip(log,tlog):
-                delete_at_time = j + 30.0
-                while time.time() < delete_at_time:
-                    await asyncio.sleep(1)
-                try:
-                    await self.bot.delete_message(i)
-                except:
-                    pass
-                log.remove(i)
-                tlog.remove(j)
-        self.bot.loop.call_later(10, self.confdefdel)
 
     @commands.command(pass_context=True)
     async def who(self, ctx, charName : str):
         'Returns character information.'
-        await defdel(ctx.message,time.time())
+        await delcomp.defdel(ctx.message,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
         if charName == '':
             result = 'Proper usage: ?who <charName>'
         try:
             heraldquery = await webquery('https://uthgard.org/herald/api/player/',charName.title())
             if len(heraldquery) < 20:
                 msg = await self.bot.say('```Character \'{}\' doesn\'t exist.```'.format(charName))
-                await defdel(msg,time.time())
+                await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
                 return
             global heraldlist
             heraldlist = []
@@ -115,7 +89,7 @@ class General():
         except:
             result = 'An unknown issue occurred. Please contact Orito and include the command you were trying to run.'
         msg = await self.bot.say('```' + result + '```')
-        await defdel(msg,time.time())
+        await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
 
     @who.error
     async def who_error(self, error, ctw):
@@ -125,10 +99,10 @@ class General():
     @commands.command(pass_context=True)
     async def search(self, ctx, type : str, *, query : str):
         'Performs a character or guild search.'
-        await defdel(ctx.message,time.time())
+        await delcomp.defdel(ctx.message,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
         if len(query) < 3:
             msg = await self.bot.say('```You entered too few characters. You must enter a minimum of 3 characters in order to perform a search.```')
-            await defdel(msg,time.time())
+            await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
             return
         global searchlist
         searchlist = []
@@ -140,19 +114,19 @@ class General():
             url = 'https://uthgard.org/herald/api/search/guild/'
         else:
             msg = await self.bot.say('```Invalid search type, \'{}\'. Valid entries: \'character\', \'char\', \'guild\'.```'.format(type))
-            await defdel(msg,time.time())
+            await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
             return
         try:
             uthquery = await webquery(url,query)
             await parsesearch(uthquery)
         except (RuntimeError, TypeError, NameError):
             msg = await self.bot.say('```Error.\n{} : {} : {}```'.format(RuntimeError,TypeError,NameError))
-            await defdel(msg,time.time())
+            await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
             return
         if searchlist == []:
             query = query.replace('%20',' ')
             msg = await self.bot.say('```Your search for \'{}\' returned no results.```'.format(query))
-            await defdel(msg,time.time())
+            await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
             return
         complist = ''
         if not type.lower() == 'guild':
@@ -187,17 +161,17 @@ class General():
                     complist = '{}{}<{}> Lv {} {} {} RR {}L{}\n'.format(complist,comptest,heraldlist[nGD],heraldlist[nLV],heraldlist[nRC],heraldlist[nCL],rrMax,rrMin)
                 if len(complist) > 1600:
                     msg = await self.bot.say('```{}```'.format(complist))
-                    await defdel(msg,time.time())
+                    await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
                     complist = ''
         else:
             for i in searchlist:
                 complist = '{}<{}>\n'.format(complist,i)
                 if len(complist) > 1600:
                     msg = await self.bot.say('```{}```'.format(complist))
-                    await defdel(msg,time.time())
+                    await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
                     complist = ''
         msg = await self.bot.say('```{}```'.format(complist))
-        await defdel(msg,time.time())
+        await delcomp.defdel(msg,time.time(),ctx.message.server.id + '#' + ctx.message.channel.name)
 
     @search.error
     async def search_error(self, error, ctw):
