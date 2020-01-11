@@ -115,13 +115,13 @@ class RVR():
                 if keep['location'] == '':
                     if not 'captured' in keep['name']:
                         if keep['name'] == 'Dun Abermenai':
-                            keepname = keep['name'] + ' (Lv 15-19)'
+                            keepname = keep['name'] + ' (Lv 20-26)'
                         elif keep['name'] == 'Thidranki Faste':
-                            keepname = keep['name'] + ' (Lv 20-24)'
+                            keepname = keep['name'] + ' (Lv 27-34)'
                         elif keep['name'] == 'Dun Murdaigean':
-                            keepname = keep['name'] + ' (Lv 25-29)'
+                            keepname = keep['name'] + ' (Lv 35-41)'
                         else:
-                            keepname = keep['name'] + ' (Lv 30-35)'
+                            keepname = keep['name'] + ' (Lv 42-47)'
                         divider = ' '
                         combine = keepname + divider + keep['owner']
                         while len(combine) < 40:
